@@ -38,7 +38,7 @@ const {Parser} = obj;
 	 */
 	self.parseExpressionField = function (expression) {
 		//这里解析出表达式中所使用到的字段信息，主要用于做逆向的值修改后可以被触发到
-		let reg = /((\$form\.)|(\$flow\.)|(\$sys\.))+[a-zA-Z0-9\$]+/g;
+		let reg = /((\$form\.)|(\$flow\.)|(\$sys\.))+[a-zA-Z0-9_\/\$]+/g;
 		let match = expression.match(reg);
 		return match || [];
 	};

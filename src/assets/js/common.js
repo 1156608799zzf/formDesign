@@ -35,13 +35,13 @@ function formatFiedlsData(data){
     let children = [];
     data.forEach(item => {
         children = item.columns;
-        if(item.tableType === 'child') {
-            label = item.entityName + '(' +item.relationType + ')';
+        if(item.relationType === 'one_to_many') {
+            label = item.alias + '(' +item.entityName + ')多';
         } else {
-            label = item.entityName;
+            label = item.alias + '(' +item.entityName + ')';
         }
         children.forEach((child, index) => {
-            children[index]['value'] = child.colName;
+            children[index]['value'] = child.colId;
             children[index]['label'] = child.colCname;
         });
         arr.push({
@@ -52,8 +52,22 @@ function formatFiedlsData(data){
     });
     return arr;
 }
+
+//去除标签
+function delHtmlTag(str){
+    return str.replace(/<\/?.+?>/g, "")
+}
+function HTMLDecode(text) {
+    let temp = document.createElement("div");
+    temp.innerHTML = text;
+    let output = temp.innerText || temp.textContent;
+    temp = null;
+    return output;
+}
 export default {
     toastInfo,
     sortFileData,
     formatFiedlsData,
+    delHtmlTag,
+    HTMLDecode
 }

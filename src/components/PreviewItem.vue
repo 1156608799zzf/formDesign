@@ -28,17 +28,23 @@
         <template v-else-if="item.options.type === 'hide-field'">
 
         </template>
+        <!--富文本编辑器-->
         <template v-else-if="item.options.type === 'a-text-panel'">
             <div v-html="item.value"></div>
         </template>
+        <!--分割线-->
+        <template v-else-if="item.options.type === 'a-interval'">
+            <div class="dividerTitle">{{ item.options.label }}</div>
+            <Divider />
+        </template>
         <!--基础控件显示-->
         <template v-else>
-            <FormItem :label="item.options.label" :prop="item.field">
+            <FormItem :label="item.options.label" :prop="item.options.key">
                 <!--单行文本-->
                 <template v-if="item.options.type === 'text'">
                     <Input
                         :disabled="readonly"
-                        v-model="model[item.field]"
+                        v-model="model[item.options.key]"
                         :placeholder="item.options.tips"
                         :maxlength="item.options.maxLength"
                     />
@@ -47,7 +53,7 @@
                 <template v-if="item.options.type === 'textarea'">
                     <Input
                         :disabled="readonly"
-                        v-model="model[item.field]"
+                        v-model="model[item.options.key]"
                         type="textarea"
                         :autosize="{minRows: 4}"
                         :placeholder="item.options.tips"
@@ -56,7 +62,7 @@
                 </template>
                 <!--单选按钮-->
                 <template v-if="item.options.type === 'radio'">
-                    <RadioGroup v-model="model[item.field]">
+                    <RadioGroup v-model="model[item.options.key]">
                         <Radio
                             v-for="(opt, optIndex) in item.options.value.values"
                             :key="optIndex" :label="opt.v"
@@ -66,7 +72,7 @@
                 </template>
                 <!--复选框-->
                 <template v-if="item.options.type === 'checkbox'">
-                    <CheckboxGroup :value="model[item.field]" @on-change="limitMaxLength">
+                    <CheckboxGroup :value="model[item.options.key]" @on-change="limitMaxLength">
                         <Checkbox v-for="(opt, optIndex) in item.options.value.values"
                                   :key="optIndex"
                                   :label="opt.v"
@@ -76,7 +82,7 @@
                 </template>
                 <!--单选下拉框-->
                 <template v-if="item.options.type === 'radio-dropdown'">
-                    <Select v-model="model[item.field]">
+                    <Select v-model="model[item.options.key]">
                         <Option
                             v-for="(opt, optIndex) in item.options.value.values"
                             :key="optIndex"
@@ -87,7 +93,7 @@
                 </template>
                 <!--多选下拉框-->
                 <template v-if="item.options.type === 'checkbox-dropdown'">
-                    <Select v-model="model[item.field]" multiple>
+                    <Select v-model="model[item.options.key]" multiple>
                         <Option
                             v-for="(opt, optIndex) in item.options.value.values"
                             :key="optIndex"
@@ -100,7 +106,7 @@
                 <template v-if="item.options.type === 'cascade'">
                     <Cascader
                         :data="item.options.value.values"
-                        v-model="model[item.field]"
+                        v-model="model[item.options.key]"
                         :disabled="readonly"></Cascader>
                 </template>
                 <!--日期-->
@@ -109,7 +115,7 @@
                         type="date"
                         :placeholder="item.options.tips"
                         :disabled="readonly"
-                        v-model="model[item.field]"></DatePicker>
+                        v-model="model[item.options.key]"></DatePicker>
                 </template>
                 <!--富文本编辑器-->
                 <template v-if="item.options.type === 'rich-text'">
@@ -131,14 +137,14 @@
                         filterable
                         :data="item.options.list"
                         :disabled="readonly"
-                        v-model="model[item.field]"></Cascader>
+                        v-model="model[item.options.key]"></Cascader>
                 </template>
                 <!--位置控件-->
                 <template v-if="item.options.type === 'choose-area'">
                     <Cascader
                         filterable
                         :data="item.options.list"
-                        v-model="model[item.field]"
+                        v-model="model[item.options.key]"
                         :disabled="readonly"></Cascader>
                 </template>
                 <!--子表控件-->
@@ -156,7 +162,7 @@
                     <div class="personContent">
                         <div class="left">
                             <Tree :data="departmentList" class="personTree"></Tree>
-                            <Table stripe :columns="tableColumns1" :data="tableData1" class="table"
+                            <Table stripe :columns="tableColumns1" :data="leftTableData" class="table"
                                    @on-select="addPersonList"></Table>
                         </div>
                         <div class="btnGroup">
@@ -193,17 +199,7 @@
                     type: ""
                 },
                 //部门列表
-                departmentList: [
-                    {
-                        title: "p1",
-                        expand: true,
-                        children: [
-                            {
-                                title: "测试"
-                            }
-                        ]
-                    }
-                ],
+                departmentList: [],
                 //人员穿梭框1
                 tableColumns1: [
                     {
@@ -213,20 +209,15 @@
                     },
                     {
                         title: "姓名",
-                        key: "name"
+                        key: "fullName"
                     },
                     {
                         title: "学号/工号",
-                        key: "id"
+                        key: "userId"
                     }
                 ],
                 //提供选择的人员列表
-                personList: [
-                    {
-                        name: 1,
-                        id: 2
-                    }
-                ],
+                personList: [],
                 //人员穿梭框2
                 tableColumns2: [
                     {
@@ -236,11 +227,11 @@
                     },
                     {
                         title: "姓名",
-                        key: "name"
+                        key: "fullName"
                     },
                     {
                         title: "学号/工号",
-                        key: "id"
+                        key: "userId"
                     }
                 ],
                 //已加入的人员列表
@@ -256,21 +247,20 @@
             }
         },
         computed: {
-            'tableData1': function () {
-                let {personList, rightTableData} = this;
-                let tableData1 = [];
-                for (let i = 0; i < personList.length; i++) {
-                    if (rightTableData.length < 1) {
-                        tableData1.push(personList[i]);
-                    } else {
-                        for (let n = 0; n < rightTableData.length; n++) {
-                            if (personList[i].id !== rightTableData[n].id) {
-                                tableData1.push(personList[i]);
+            'leftTableData': function () {
+                let {rightTableData} = this;
+                let personList = JSON.parse(JSON.stringify(this.personList));
+                let leftData = JSON.parse(JSON.stringify(personList));
+                personList.forEach((item, index) => {
+                    if(rightTableData.length > 0) {
+                        rightTableData.forEach(child => {
+                            if(item.userId === child.userId) {
+                                leftData.splice(index, 1);
                             }
-                        }
+                        })
                     }
-                }
-                return tableData1;
+                });
+                return leftData;
             },
         },
         watch: {
@@ -320,20 +310,45 @@
             this.$watch('item', {
                 immediate: true,
                 handler: (item) => {
+                    let type = item.options.type;
                     //监听初始化富文本编辑器
-                    if (item.options.type === 'rich-text') {
+                    if (type === 'rich-text') {
                         //rich-text_1570869651000_73737
                         let editor = new Editor(`.${item.options.id}`);
+                        editor.customConfig.onchange = html => {
+                            this.item.options.value = html;
+                        };
                         editor.create();
                     }
                 }
-            })
+            });
         },
         methods: {
             //选择人员设置
             choosePerson() {
                 this.modal.type = 'person';
                 this.modal.show = true;
+                //人员控件监听获取部门及员工
+                this.$Spin.show();
+                this.$axios.getApartmentList().then(res => {
+                    let list = res.data;
+                    this.departmentList = this.sortFileData(list, 0);
+                    if(list.length > 0) {
+                        this.$axios.getPersonList({
+                            data: {
+                                params: {
+                                    orgId: res.data[0],
+                                    pageSize: 10000
+                                }
+                            }
+                        }).then(res => {
+                            this.personList = res.data.records;
+                            this.$Spin.hide();
+                        })
+                    } else {
+                        this.$Spin.hide();
+                    }
+                });
             },
             //添加人员
             addPerson() {
@@ -402,7 +417,31 @@
                 if(val.length >= this.item.options.maxLength) {
                     this.readonly = true;
                 }
-                this.model[this.item.field] = val;
+                this.model[this.item.options.key] = val;
+            },
+            //排序
+            sortFileData(data, parentId) {
+                let convertData = [];
+                data.forEach(item => {
+                    if(item.orgPid == parentId) {
+                        item['title'] = item.orgName;
+                        convertData.push(item);
+                        this.convertChild(data, item, item.orgId)
+                    }
+                });
+                return convertData;
+            },
+            convertChild(arr, parentItem, parentId) {
+                parentItem.children = parentItem.children ? parentItem.children : [];
+                arr.forEach(item => {
+                    if(item.orgPid === parentId) {
+                        item['title'] = item.orgName;
+                        parentItem.expand = true;
+                        parentItem.children.push(item);
+                        this.convertChild(arr, item, item.orgId)
+                    }
+                });
+                return parentItem.children;
             }
         }
     }
@@ -411,32 +450,24 @@
 <style lang="scss" scoped>
     .personContent {
         display: flex;
-
         .table {
             flex: 0 0 auto;
             width: 300px;
         }
-
         .left {
             display: flex;
             flex: 1;
             overflow: hidden;
-
             .personTree {
                 flex: 1;
                 overflow: hidden;
             }
-
         }
-
         .btnGroup {
             display: flex;
             flex-direction: column;
             justify-content: space-around;
             margin: 0 15px;
         }
-    }
-
-    .previewItem {
     }
 </style>

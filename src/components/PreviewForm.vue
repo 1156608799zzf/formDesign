@@ -37,16 +37,16 @@
                     let model = {};
                     let watchArr = [];
                     formList.forEach(item => {
-                        let field = item.field;
+                        let field = item.options ? item.options.key : '';
                         if(field) {
                             let {type, watch} = item.options;
                             if(type === 'checkbox' || type === 'radio' || type === 'radio-dropdown' || type === 'checkbox-dropdown' || type === 'cascade' || type === 'file-upload' || type === 'choose-area' || type === 'icon-input' || type === 'choose-department' || type === 'choose-user') {
-                                model[item.field] = [];
+                                model[field] = [];
                             } else {
-                                model[item.field] = "";
+                                model[field] = "";
                             }
                             watch.forEach(watchObj => {
-                                watchObj.el = item.field;
+                                watchObj.el = field;
                                 watchArr.push(watchObj);
                             })
                         }
@@ -67,6 +67,7 @@
             //提交表单验证
             submitForm(){
                 this.$refs['previewForm'].validate(valid => {
+                    console.warn(valid)
                     if(valid) {
 
                     }
@@ -84,7 +85,7 @@
                 // let reg = /((\$form\.)|(\$flow\.)|(\$sys\.))+[a-zA-Z0-9\$]+/g;
                 let parser = form.parser();
                 list.forEach(item => {
-                    let {required, inputRules} = item.options;
+                    let {required, inputRules,key: field} = item.options;
                     let fieldRulesArr = [];
                     //必填的规则
                     if(required) {
@@ -146,7 +147,7 @@
                             }
                         });
                     }
-                    rules[item.field] = fieldRulesArr;
+                    rules[field] = fieldRulesArr;
                 });
                 this.rules = rules;
             },

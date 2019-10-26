@@ -22,7 +22,17 @@
     import draggable from 'vuedraggable'
     export default {
         name: "DragAddOption",
-        props: ['selectItem'],
+        props: {
+            selectItem: {
+                type: [Object]
+            },
+            addType: {
+                type: [String],
+                default(){
+                    return 'value';
+                }
+            }
+        },
         components: {
             draggable
         },
@@ -33,7 +43,7 @@
                 if(selectItem.options.type === 'a-tab') {
                     list = selectItem.options.child;
                 } else {
-                    list = selectItem.options.value.values;
+                    list = selectItem.options[this.addType].values;
                 }
                 return list;
             }
@@ -48,14 +58,14 @@
                         options.child.push({v: options.child.length + '', n: "标签" + (options.child.length + 1), list: []});
                         break;
                     default:
-                        options.value.values.push({v: Date.parse(new Date()) + '_' + Math.ceil(Math.random() * 99999), n: ''});
+                        options[[this.addType]].values.push({v: Date.parse(new Date()) + '_' + Math.ceil(Math.random() * 99999), n: ''});
                 }
             },
             //删除标签名、多选等选项
             handleDelOption(index){
                 let options = this.selectItem.options;
-                if(options && options.list instanceof Array) {
-                    options.list.splice(index, 1);
+                if(options && options[[this.addType]].values instanceof Array) {
+                    options[[this.addType]].values.splice(index, 1);
                 }
             }
         }

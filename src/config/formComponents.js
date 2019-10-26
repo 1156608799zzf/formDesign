@@ -21,11 +21,17 @@
 const dbInfos = [
     {
         valueType: "primary",
-        fieldId: []
+        tableId: "",
+        fieldId: "",
+        fieldName: "",
+        cascadeValue: []
     },
     {
         valueType: "assist",
-        fieldId: []
+        fieldId: "",
+        tableId: "",
+        fieldName: "",
+        cascadeValue: []
     }
 ];
 //接口中value字段规范
@@ -38,7 +44,7 @@ const value = {
 const initValue = {
     type: "",
     values: [],
-    refValues: []
+    refValues: ""
 };
 //验证规则接口规范（用于添加规则时使用）
 const validateRules = {
@@ -107,7 +113,7 @@ const formComponents = [
             hide: readHideReq,
             required: readHideReq,
             inputRules: [],
-            dbInfos: [dbInfos[0]],
+            dbInfos: dbInfos,
             value: value,
             watch: [],
             initValue: initValue
@@ -126,7 +132,7 @@ const formComponents = [
             hide: readHideReq,
             required: readHideReq,
             inputRules: [],
-            dbInfos: [dbInfos[0]],
+            dbInfos: dbInfos,
             value: value,
             watch: [],
             initValue: initValue
@@ -145,7 +151,7 @@ const formComponents = [
             hide: readHideReq,
             required: readHideReq,
             inputRules: [],
-            dbInfos: [dbInfos[0]],
+            dbInfos: dbInfos,
             value: value,
             watch: [],
             initValue: initValue
@@ -164,7 +170,7 @@ const formComponents = [
             hide: readHideReq,
             required: readHideReq,
             inputRules: [],
-            dbInfos: [dbInfos[0]],
+            dbInfos: dbInfos,
             value: value,
             watch: [],
             initValue: initValue
@@ -183,27 +189,31 @@ const formComponents = [
             hide: readHideReq,
             required: readHideReq,
             inputRules: [],
-            dbInfos: [dbInfos[0]],
+            dbInfos: dbInfos,
             value: value,
-            watch: [],
-            initValue: initValue
+            watch: []
         }
     },
     {
         name: "日期",
         icon: "icon-input",
+        compType: "date",
         options: {
             type: "date",
             label: "日期",
             key: null,
             tips: "",
-            maxLength: null,
             readonly: readHideReq,
             hide: readHideReq,
             required: readHideReq,
             inputRules: [],
             dbInfos: [dbInfos[0]],
             watch: [],
+            extend: {
+                date: {
+                    format: ""
+                }
+            }
         }
     },
     {
@@ -243,6 +253,7 @@ const formComponents = [
     {
         name: "人员控件",
         icon: "icon-input",
+        singleSwitch: false,
         options: {
             type: "choose-user",
             label: "人员控件",
@@ -256,7 +267,7 @@ const formComponents = [
             dbInfos: dbInfos,
             watch: [],
             initValue: initValue,
-            value: value,
+            // value: value,
         }
     },
     {
@@ -292,24 +303,20 @@ const formComponents = [
             required: readHideReq,
             inputRules: [],
             dbInfos: dbInfos,
-            value: value,
             initValue: initValue,
             watch: [],
+            value: value
         }
     },
     {
         name: "子表控件",
         icon: "icon-input",
+        inline: false,
         options: {
             type: "a-sub-list",
             label: "子表控件",
-            key: null,
-            tips: "",
-            maxLength: null,
             readonly: readHideReq,
             hide: readHideReq,
-            required: readHideReq,
-            watch: [],
             extend: {
                 sublist: []
             }
@@ -332,6 +339,8 @@ const formComponents = [
             type: "hide-field",
             label: "隐藏字段",
             key: null,
+            dbInfos: [dbInfos[0]],
+            maxLength: null
         }
     },
     {
@@ -350,7 +359,8 @@ const formComponents = [
         icon: "icon-input",
         options: {
             type: "a-interval",
-            key: null
+            label: "",
+            initValue: initValue
         }
     },
     {

@@ -74,7 +74,7 @@ function ajax(options) {
             timeout: 10000,
             method: options.method ? options.method : "post"
         }).then(res => {
-            let data = res.data;
+            let data = JSON.parse(that.GLOBAL.HTMLDecode(JSON.stringify(res.data)));
             let code = data.code;
             //关闭加载
             if (isLoading) {
@@ -99,11 +99,12 @@ function ajax(options) {
 }
 
 //获取数据字典列表
-function getFormDesigner() {
+function getFormDesigner(options = {}) {
     return new Promise((resolve, reject) => {
         ajax({
             url: "general/dicts/form-designer",
-            method: "get"
+            method: "get",
+            params: options.data ? options.data : null,
         }).then(res => {
             let data = res.data;
             that.$store.dispatch('formDesigner', data);
@@ -113,11 +114,11 @@ function getFormDesigner() {
 }
 
 //获取自定义 sql 列表
-function getSqlAllByUseForOfDictItemCode(options) {
+function getSqlAllByUseForOfDictItemCode(options = {}) {
     return new Promise((resolve, reject) => {
         ajax({
             url: "general/sqlManage/getSqlAllByUseForOfDictItemCode",
-            params: options.params ? options.params : null,
+            params: options.data ? options.data : null,
             method: "get"
         }).then(res => {
             let data = res.data;
@@ -128,11 +129,12 @@ function getSqlAllByUseForOfDictItemCode(options) {
 }
 
 //获取系统变量列表
-function getSysVarList() {
+function getSysVarList(options) {
     return new Promise((resolve, reject) => {
         ajax({
             url: "general/dicts/fixed/system-variable",
-            method: "get"
+            method: "get",
+            data: options ? options : null
         }).then(res => {
             let data = res.data;
             that.$store.dispatch('sysVarList', data);
@@ -142,7 +144,7 @@ function getSysVarList() {
 }
 
 //获取表字段列表
-function getTableFiedls(params) {
+function getTableFiedls() {
     ajax({
         url: "general/business/table-data/1182945651466436609",
         method: "get"
@@ -151,7 +153,29 @@ function getTableFiedls(params) {
         that.$store.dispatch('tableFields', data);
     })
 }
-
+//获取部门列表
+function getApartmentList(){
+    return new Promise((resolve, reject) => {
+        ajax({
+            url: "base/org/form",
+            method: 'get'
+        }).then(res => {
+            resolve(res);
+        })
+    })
+}
+//获取人员列表
+function getPersonList(options){
+    return new Promise((resolve, reject) => {
+        ajax({
+            url: "base/user/form",
+            method: 'get',
+            data: options ? options.data : null
+        }).then(res => {
+            resolve(res);
+        })
+    })
+}
 export default {
     ajax,
     baseURL,
@@ -161,4 +185,6 @@ export default {
     getSqlAllByUseForOfDictItemCode,
     getSysVarList,
     getTableFiedls,
+    getApartmentList,
+    getPersonList,
 };

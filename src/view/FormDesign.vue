@@ -140,13 +140,6 @@
                     type: type
                 };
                 if (type === 'preview') {
-                    // let list = this.widgetForm.list;
-                    // for(let i = 0; i < list.length; i++) {
-                    //     if(!list[i].field) {
-                    //         this.GLOBAL.toastInfo('请先填写key值后再预览', 'warning');
-                    //         return false;
-                    //     }
-                    // }
                     modal.title = '预览表单'
                 }
                 this.modal = modal;
@@ -167,6 +160,7 @@
                 }).then(res => {
                     if(res.code === 0) {
                         this.GLOBAL.toastInfo('保存成功', 'success');
+                        this.getFormData();
                     }
                 })
             },
@@ -180,7 +174,7 @@
                     let data = res.data;
                     let list = JSON.parse(data.data);
                     if(list.length > 0) {
-                        this.widgetFormSelect = list[0];
+                        this.widgetFormSelect = list[list.length - 1];
                     }
                     widgetForm.list = list;
                     widgetForm.version = data.version;

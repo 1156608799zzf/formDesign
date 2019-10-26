@@ -33,11 +33,8 @@
         </template>
         <!--分割线-->
         <template v-else-if="item.options.type === 'a-interval'">
+            <div class="dividerTitle">{{ item.options.label }}</div>
             <Divider />
-        </template>
-        <!--文本面板-->
-        <template v-else-if="item.options.type === 'a-text-panel'">
-            <div v-html="item.value"></div>
         </template>
         <!--基础控件显示-->
         <template v-else>
@@ -108,11 +105,11 @@
                 </template>
                 <!--部门控件-->
                 <template v-if="item.options.type === 'choose-department'">
-                    <Cascader :data="item.options.list" v-model="item.options.value"></Cascader>
+                    <Cascader :data="item.options.list"></Cascader>
                 </template>
                 <!--位置控件-->
                 <template v-if="item.options.type === 'choose-area'">
-                    <Cascader :data="item.options.list" v-model="item.options.value"></Cascader>
+                    <Cascader :data="item.options.list"></Cascader>
                 </template>
                 <!--子表控件-->
                 <template v-if="item.options.type === 'a-sub-list'">
@@ -121,11 +118,17 @@
                             v-model="item.options.extend.sublist"
                             v-bind="{group:'people', ghostClass: 'ghost',animation: 200, handle: '.itemMove'}"
                             class="dragComp"
+                            :class="{subList: item.inline}"
+                            :style="{width: item.inline ? (item.options.extend.sublist.length * 200 + 200) + 'px' : 'auto'}"
                             @change="handleChange(arguments[0], item.options.extend.sublist)"
                         >
                             <VirtualFormItem v-for="(vItem, vIndex) in item.options.extend.sublist" :key="vIndex" :item="vItem" :select="select" :list="item.options.extend.sublist"></VirtualFormItem>
                         </draggable>
                     </div>
+                </template>
+                <!--文本面板-->
+                <template v-else-if="item.options.type === 'a-text-panel'">
+                    <div v-html="item.value"></div>
                 </template>
             </FormItem>
         </template>
@@ -151,6 +154,7 @@
         },
         data(){
             return {
+                editor: ""
             }
         },
         computed: {
@@ -160,14 +164,20 @@
             }
         },
         watch: {
+            'item.options.tips'(){
+                let item = this.item;
+                if(item.options && item.options.type === 'rich-text') {
+                    this.editor.txt.html(`<p>${item.options.tips}</p>`)
+                }
+            }
         },
         mounted(){
             this.$watch('item', (item) => {
                 //监听初始化富文本编辑器
-                if(item.options.type === 'rich-text') {
+                if(item.options.type === 'rich-text' && !this.editor) {
                     //rich-text_1570869651000_73737
-                    let editor = new Editor(`#${item.options.id}`);
-                    editor.create();
+                    this.editor = new Editor(`#${item.options.id}`);
+                    this.editor.create();
                 }
             })
         },
@@ -228,7 +238,7 @@
             justify-content: center;
             align-items: center;
             padding: 2px;
-            z-index: 4;
+            z-index: 10000;
             cursor: pointer;
             &.itemMove {
                 left: 0;
@@ -269,13 +279,23 @@
             overflow: visible;
         }
         .subListComp {
-            display: flex;
+            overflow: auto;
             .ivu-table-wrapper {
                 max-width: calc(100% - 200px);
             }
             .dragComp {
-                flex:  1;
                 height: 100%;
+                overflow-x: auto;
+                &.subList {
+                    display: flex;
+                    .virtualFormItem {
+                        flex: 0 0 auto;
+                        width: 200px;
+                    }
+                }
+                .virtualFormItem {
+
+                }
             }
         }
     }
