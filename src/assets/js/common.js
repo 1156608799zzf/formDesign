@@ -64,10 +64,54 @@ function HTMLDecode(text) {
     temp = null;
     return output;
 }
+//获取组件的默认值类型
+function getModelDb(type){
+    let db = {};
+    if(type === 'checkbox' || type === 'checkbox-dropdown' || type === 'cascade' || type === 'file-upload' || type === 'choose-area' || type === 'icon-input' || type === 'choose-department' || type === 'choose-user') {
+        db.primary = [];
+        db.assist = [];
+    } else {
+        db.primary = "";
+        db.assist = "";
+    }
+    return db;
+}
+
+//树遍历赋值
+function mapTree(params){
+    function mapChildren(params){
+        let {data, callback} = params;
+        data.forEach(item => {
+            callback(item);
+            if(item.children && item.children.length > 0) {
+                mapChildren({
+                    callback: callback,
+                    data: item.children
+                });
+            }
+        })
+    }
+    mapChildren(params);
+    return params.data;
+}
+
+function isJSON_test(str) {
+    if (typeof str == 'string') {
+        try {
+            let obj = JSON.parse(str);
+            return true;
+        } catch(e) {
+            return false;
+        }
+    }
+}
 export default {
     toastInfo,
     sortFileData,
     formatFiedlsData,
     delHtmlTag,
-    HTMLDecode
+    HTMLDecode,
+    getModelDb,
+    mapTree,
+    isJSON_test,
 }

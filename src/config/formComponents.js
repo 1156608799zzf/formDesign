@@ -359,8 +359,7 @@ const formComponents = [
         icon: "icon-input",
         options: {
             type: "a-interval",
-            label: "",
-            initValue: initValue
+            label: ""
         }
     },
     {

@@ -64,7 +64,7 @@
         <IviewModal :modal="modal">
             <div slot="content">
                 <template v-if="modal.type === 'preview'">
-                    <PreviewForm :widgetForm="widgetForm"></PreviewForm>
+                    <PreviewForm v-if="formData" :formData="formData" :ajaxData="ajaxData" :formModel="formModel" :formValue="formValue"></PreviewForm>
                 </template>
             </div>
         </IviewModal>
@@ -104,8 +104,94 @@
                     show: false,
                     title: "预览表单",
                     type: ""
-                }
+                },
 
+                /*
+                * 预览表单
+                * */
+                //表JSON
+                formData: [],
+                //接口传参格式
+                ajaxData: [],
+                //表单model
+                formModel: {},
+                //表单的值
+                formValue: {},
+                //formInstId
+                formInstId: "3c461c5e6e9b8b16813f81026bc9cad1",
+                //填写的数据
+                formDataTable: []
+
+            }
+        },
+        watch: {
+            //提取出表单的model.用于保存填写数据
+            formData(){
+                let formData = this.formData;
+                let ajaxData = [];
+                let formModel = {};
+                let formValue = {};
+                let obj;
+                //整理数据传参格式
+                formData.forEach(item => {
+                    let type = item.options.type;
+                    if(type === 'l-row-2' || type === 'l-row-3' || type === 'a-tab') {
+                        let arr = this.getModel(item);
+                        ajaxData = ajaxData.concat(arr);
+                    } else if(type === 'a-sub-list') {
+                        let list = item.options.extend.sublist;
+                        let id = item.options.id;
+                        obj = {
+                            id,
+                            key: id,
+                            data: []
+                        };
+                        let arr = [];
+                        list.forEach(item => {
+                            arr = arr.concat(this.getModel(item));
+                        });
+                        obj.data[0] = arr;
+                        ajaxData.push(obj);
+                    } else {
+                        let {id, key} = item.options;
+                        obj = {
+                            id,
+                            key,
+                            db: this.GLOBAL.getModelDb(type)
+                        };
+                        item = this.changeDbOptions(item);
+                        ajaxData.push(obj);
+                    }
+                });
+                //整理表单model格式（提交表单时整合为 数据传参格式）
+                ajaxData.forEach(item => {
+                    let {key} = item;
+                    //子表
+                    if(item.data) {
+                        let dataList = item.data && item.data.length > 0 ? item.data[0] : [];
+                        let dataObj = {
+                            action: ""
+                        };
+                        dataList.forEach(dataItem => {
+                            dataObj[dataItem.key] = dataItem.db.primary;
+                            dataObj[dataItem.key] = dataItem.db.assist;
+                        });
+                        formModel[key] = [];
+                        formValue[key] = [];
+                        formModel[key].push(dataObj);
+                        formValue[key].push(dataObj);
+                    } else {
+                        //普通
+                        formModel[key] = item.db.primary;
+                        formValue[key] = item.db.assist;
+                    }
+                });
+                this.ajaxData = ajaxData;
+                this.formModel = formModel;
+                this.formValue = formValue;
+                this.$nextTick(() => {
+                    this.getFormModelVal();
+                })
             }
         },
         mounted() {
@@ -130,8 +216,19 @@
             this.getFormData();
             //获取表单字段表
             this.$axios.getTableFiedls();
+            //获取JSON
+            this.getPreviewFormData();
         },
         methods: {
+            //获取表单JSON
+            getPreviewFormData(){
+                this.$axios.ajax({
+                    url: "form/datas/init/form-key/uitest",
+                    method: "get"
+                }).then(res => {
+                    this.formData = JSON.parse(this.GLOBAL.HTMLDecode(JSON.stringify(res.data)));
+                });
+            },
             //预览表单
             showModal(type) {
                 let modal = {
@@ -161,6 +258,7 @@
                     if(res.code === 0) {
                         this.GLOBAL.toastInfo('保存成功', 'success');
                         this.getFormData();
+                        this.getPreviewFormData();
                     }
                 })
             },
@@ -180,6 +278,95 @@
                     widgetForm.version = data.version;
                     this.widgetForm = widgetForm;
                 })
+            },
+            //回显数据处理
+            getFormModelVal(){
+                let formModel = this.formModel;
+                let formData = this.formDataTable;
+                let subListResult = [];
+                formData.forEach(item => {
+                    let {entityName, relationType} = item;
+                    if(relationType === 'one_to_many') {
+                        let obj;
+                        let dataArr = item.values;
+                        dataArr.forEach(dataItem => {
+                            obj = {};
+                            for(let o in dataItem) {
+                                obj[entityName + '__' + o] = dataItem[o];
+                            }
+                            subListResult.push(obj);
+                        });
+                    } else {
+                        let values = item.values;
+                        if(values) {
+                            for(let v in values) {
+                                if(formModel[entityName + '__' + v] !== undefined) {
+                                    formModel[entityName + '__' + v] = values[v];
+                                }
+                            }
+                        }
+                    }
+                });
+                for(let f in formModel) {
+                    if(f.indexOf('a-sub-list') > -1) {
+                        formModel[f] = subListResult;
+                    }
+                }
+                this.formModel = formModel;
+            },
+            //递归获取表单模型的key
+            getModel(parentItem, arr){
+                arr = arr ? arr : [];
+                let obj,
+                    list;
+                let parentOptions = parentItem.options ? parentItem.options : parentItem;
+                if(parentOptions.hasOwnProperty('child')) {
+                    list = parentOptions.child;
+                } else if(parentOptions.hasOwnProperty('list')){
+                    list = parentOptions.list;
+                }
+                if(list && list.length > 0) {
+                    list.forEach(item => {
+                        if(item.options && item.options.key) {
+                            let {key, type, id} = item.options;
+                            obj = {
+                                key,
+                                id,
+                                db: this.GLOBAL.getModelDb(type)
+                            };
+                            arr.push(obj);
+                        }
+                        item = this.changeDbOptions(item);
+                        this.getModel(item, arr);
+                    })
+                }
+                if(parentOptions.key) {
+                    let {key, id, type} = parentOptions;
+                    obj = {
+                        key,
+                        id,
+                        db: this.GLOBAL.getModelDb(type)
+                    };
+                    arr.push(obj);
+                }
+                return arr;
+            },
+            //将单选、复选等的n/v值 转换为value/key值
+            changeDbOptions(item){
+                if(item.options) {
+                    if(item.options.value && item.options.value.values.length > 0) {
+                        let list = item.options.value.values;
+                        if(list instanceof Array) {
+                            list.forEach(opt => {
+                                opt['value'] = opt.n;
+                                opt['key'] = opt.v;
+                            })
+                        } else {
+                            item.options.value.values = [];
+                        }
+                    }
+                }
+                return item;
             }
         }
     }

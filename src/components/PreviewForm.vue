@@ -1,11 +1,9 @@
 <template>
-    <div class="previewForm">
-        <Form :label-width="120" :model="formModel" ref="previewForm" :rules="rules">
-            <PreviewItem v-for="(item, index) in list" :key="index" :item="item" :model="formModel"></PreviewItem>
-            <FormItem class="text-center" :label-width="0">
-                <Button type="primary" @click="submitForm">提交</Button>
-<!--                <Button type="primary" @click="resetForm">重置表单信息</Button>-->
-            </FormItem>
+    <div>
+        <Form :label-width="120" :model="formModel" ref="pcForm" :rules="rules">
+            <template v-for="item in formData">
+                <PreviewItem :item="item" :formModel="formModel" :form-value="formValue"></PreviewItem>
+            </template>
         </Form>
     </div>
 </template>
@@ -15,72 +13,32 @@
     import '../assets/js/form'
     export default {
         name: "PreviewForm",
-        props: ['widgetForm'],
+        props: ['formData', 'formModel', 'ajaxData', 'formValue'],
         components: {
             PreviewItem
         },
         data(){
             return {
-                list: this.widgetForm.list,
-                formModel: {},
-                rules: {},
-                //监听
-                parser: ""
+                //表单规则
+                rules: {}
             }
         },
         watch: {
-            widgetForm: {
-                deep: true,
-                immediate: true,
-                handler: function(){
-                    let formList = this.widgetForm.list;
-                    let model = {};
-                    let watchArr = [];
-                    formList.forEach(item => {
-                        let field = item.options ? item.options.key : '';
-                        if(field) {
-                            let {type, watch} = item.options;
-                            if(type === 'checkbox' || type === 'radio' || type === 'radio-dropdown' || type === 'checkbox-dropdown' || type === 'cascade' || type === 'file-upload' || type === 'choose-area' || type === 'icon-input' || type === 'choose-department' || type === 'choose-user') {
-                                model[field] = [];
-                            } else {
-                                model[field] = "";
-                            }
-                            watch.forEach(watchObj => {
-                                watchObj.el = field;
-                                watchArr.push(watchObj);
-                            })
-                        }
-                    });
-                    this.watchArr = watchArr;
-                    //更新表单规则
-                    this.formatRules();
-                    //更新监听
-                    this.updateWatch();
-                    this.formModel = model;
-                }
+            formData(){
+                //生成校验规则
+                this.formatRules();
+                //生成监听
+                this.updateWatch();
             }
         },
         mounted(){
             this.parser = form.parser();
         },
         methods: {
-            //提交表单验证
-            submitForm(){
-                this.$refs['previewForm'].validate(valid => {
-                    console.warn(valid)
-                    if(valid) {
-
-                    }
-                })
-            },
-            //重置表单信息
-            resetForm(){
-                this.$refs['previewForm'].resetFields();
-            },
             //计算校验规则
             formatRules(){
                 let rules = {};
-                let list = this.list;
+                let list = this.formData;
                 // let expression = '$form.test - getOwnLeaveDay()';
                 // let reg = /((\$form\.)|(\$flow\.)|(\$sys\.))+[a-zA-Z0-9\$]+/g;
                 let parser = form.parser();
@@ -89,7 +47,8 @@
                     let fieldRulesArr = [];
                     //必填的规则
                     if(required) {
-                        let {type, expression} = required;
+                        let {type} = required;
+                        let expression = required.expression;
                         if(type !== 'off') {
                             if(type === 'on') {
                                 fieldRulesArr.push({
@@ -119,31 +78,55 @@
                     //输入的验证规则
                     if(inputRules && inputRules.length > 0) {
                         inputRules.forEach(rules => {
-                            let {regularOrExpression: expression, message, validateType } = rules;
-                            if(validateType === 'local') {
-                                if(eval(expression) instanceof RegExp) {
-                                    fieldRulesArr.push({
-                                        pattern: eval(expression),
-                                        message: message,
-                                        trigger: "blur"
-                                    })
-                                }
-                            } else if(validateType === 'expression'){
-                                const exprFn = (rule, value, callback) => {
-                                    if(form.utils.runExpression(expression, {
-                                        $form: this.formModel
-                                    }, parser)) {
-                                        callback(new Error(message));
-                                    } else {
-                                        callback();
+                            let {message, validateType } = rules;
+                            let expression = rules.regularOrExpression;
+                            switch (validateType) {
+                                case 'local':
+                                    if(eval(expression) instanceof RegExp) {
+                                        fieldRulesArr.push({
+                                            pattern: eval(expression),
+                                            message: message,
+                                            trigger: "blur"
+                                        })
                                     }
-                                };
-                                fieldRulesArr.push({
-                                    validator: exprFn,
-                                    trigger: "blur"
-                                })
-                            } else {
-
+                                    break;
+                                case 'expression':
+                                    const exprFn = (rule, value, callback) => {
+                                        if(form.utils.runExpression(expression, {
+                                            $form: this.formModel
+                                        }, parser)) {
+                                            callback(new Error(message));
+                                        } else {
+                                            callback();
+                                        }
+                                    };
+                                    fieldRulesArr.push({
+                                        validator: exprFn,
+                                        trigger: "blur"
+                                    });
+                                    break;
+                                case 'remote':
+                                    const remoteFn = (rule, value, callback) => {
+                                        this.$axios.ajax({
+                                            url: expression,
+                                            data: {
+                                                params: {
+                                                    v: value
+                                                }
+                                            }
+                                        }).then(res => {
+                                            if(res.data) {
+                                                callback();
+                                            } else {
+                                                callback(new Error(message));
+                                            }
+                                        })
+                                    };
+                                    fieldRulesArr.push({
+                                        validator: remoteFn,
+                                        trigger: "blur"
+                                    });
+                                    break;
                             }
                         });
                     }
@@ -151,10 +134,92 @@
                 });
                 this.rules = rules;
             },
+            //提交表单
+            submitForm(){
+                this.$refs['pcForm'].validate(valid => {
+                    if(valid) {
+                        let params = {
+                            formModelId: "77adc137f8e1510f87ab9ded4619720e",
+                            businessId: "1182945651466436609",
+                            fields: JSON.stringify(this.enterAjaxData())
+                        };
+                        console.warn(JSON.stringify(this.enterAjaxData()));
+                        this.$axios.ajax({
+                            url: "form/insts/flow",
+                            data: {
+                                params: params,
+                                loading: true
+                            },
+                            headers: {
+                                'Content-Type': 'application/json;charse=UTF-8'
+                            },
+                            noStringifyData: true
+                        }).then(res => {
+                            if(res.code === 0) {
+                                this.GLOBAL.toastInfo('提交成功', 'success');
+                            }
+                        })
+                    }
+                });
+            },
+            //将填写的数据归到提交接口数据格式中
+            enterAjaxData(){
+                //格式化子表数据传参
+                function getSublistArr(list, formModelItem, fieldName){
+                    let arr = [];
+                    formModelItem.forEach(item => {
+                        let exampleArr = JSON.parse(JSON.stringify(list[0]));
+                        for(let n = 0; n < exampleArr.length; n++) {
+                            for(let m in item) {
+                                if(exampleArr[n].key === m) {
+                                    exampleArr[n].db[fieldName] = item[m] instanceof Array ? item[m].join(";") : item[m];
+                                }
+                            }
+                        }
+                        arr.push(exampleArr);
+                    });
+                    return arr;
+                }
+                let ajaxData = this.ajaxData;
+                let obj = [
+                    {objName: "formModel", fieldName: "primary"},
+                    {objName: "formValue", fieldName: "assist"},
+                ];
+                for(let o in obj) {
+                    let formModel = JSON.parse(JSON.stringify(this[obj[o].objName]));
+                    let fieldName = obj[o].fieldName;
+                    ajaxData.forEach(item => {
+                        for(let i in formModel) {
+                            if(item.key === i) {
+                                if(item.data) {
+                                    item.data = getSublistArr(item.data, formModel[i], fieldName);
+                                } else {
+                                    item.db[fieldName] = formModel[i] instanceof Array ? formModel[i].join(";") : formModel[i];;
+                                }
+                                break;
+                            }
+                        }
+                    });
+                }
+                this.ajaxData = ajaxData;
+                return ajaxData;
+            },
             //监听
             updateWatch(){
-                let watchArr = this.watchArr;
-                let watchColl = {};
+                let list = this.formData;
+                let parser = form.parser();
+                let watchArr = [],
+                    watchColl = {};
+                list.forEach(item => {
+                    let field = item.options ? item.options.key : '';
+                    let {watch} = item.options;
+                    if(field && watch) {
+                        watch.forEach(watchObj => {
+                            watchObj.el = field;
+                            watchArr.push(watchObj);
+                        })
+                    }
+                });
                 watchArr.forEach(item => {
                     let {expression, el} = item;
                     let varArr = form.parseExpressionField(expression);
@@ -174,9 +239,9 @@
                         let arr = watchColl[i];
                         arr.forEach(item => {
                             let expression = item.expression;
-                            this.formModel[item.el] = form.utils.runExpression(expression, {
+                            this.formModel[item.el] = String(form.utils.runExpression(expression, {
                                 $form: this.formModel
-                            }, this.parser);
+                            }, parser));
                         })
                     })
                 }

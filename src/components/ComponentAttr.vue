@@ -277,7 +277,8 @@
                     show: false,
                     title: "编辑面板"
                 },
-                parser: ""
+                parser: "",
+                textEditor: ""
             }
         },
         computed: {
@@ -298,7 +299,6 @@
                 return this.itemOptions.type;
             },
             itemOptions(){
-                console.warn(this.selectItem.options)
                 return this.selectItem.options;
             }
         },
@@ -323,12 +323,15 @@
             },
             'modal.show'(){
                 let selectItem = this.selectItem;
+                let itemOptions = this.itemOptions;
                 if(itemOptions.type === 'a-text-panel') {
-                    let editor = new Editor('#textCompEditor');
-                    editor.customConfig.onchange = html => {
-                        this.selectItem.value = html;
-                    };
-                    editor.create();
+                    if(!this.textEditor) {
+                        this.textEditor = new Editor('#textCompEditor');
+                        this.textEditor.customConfig.onchange = html => {
+                            this.selectItem.value = html;
+                        };
+                        this.textEditor.create();
+                    }
                 }
             }
         },
@@ -460,8 +463,8 @@
                         expr = "/^((0\\d{2,3})-)(\\d{7,8})(-(\\d{3,}))?$/";
                         break;
                 }
-                itemOptions.inputRules[index]['subType'] = item;
-                itemOptions.inputRules[index]['regularOrExpression'] = expr;
+                selectItem.options.inputRules[index]['subType'] = item;
+                selectItem.options.inputRules[index]['regularOrExpression'] = expr;
                 this.$bus.$emit('updateSelectItem', selectItem)
             },
             //候选值类型变化
