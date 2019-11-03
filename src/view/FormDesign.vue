@@ -105,7 +105,7 @@
                     title: "预览表单",
                     type: ""
                 },
-
+                formAjaxKey: "uitest",
                 /*
                 * 预览表单
                 * */
@@ -195,6 +195,11 @@
             }
         },
         mounted() {
+            //获取表设计器的key
+            let formAjaxKey = this.$route.query.key;
+            if(formAjaxKey) {
+                this.formAjaxKey = formAjaxKey;
+            }
             //监听更新选中表单项
             this.$bus.$off('updateSelectItem');
             this.$bus.$on('updateSelectItem', item => {
@@ -223,7 +228,7 @@
             //获取表单JSON
             getPreviewFormData(){
                 this.$axios.ajax({
-                    url: "form/datas/init/form-key/uitest",
+                    url: "form/datas/init/form-key/" + this.formAjaxKey,
                     method: "get"
                 }).then(res => {
                     this.formData = JSON.parse(this.GLOBAL.HTMLDecode(JSON.stringify(res.data)));
@@ -245,7 +250,7 @@
             //保存表单
             saveForm() {
                 this.$axios.ajax({
-                    url: "form/models/data/uitest",
+                    url: "form/models/data/" + this.formAjaxKey,
                     data: {
                         params: {
                             data: JSON.stringify(this.widgetForm.list),
@@ -265,7 +270,7 @@
             //获取表单的JSON数据
             getFormData(){
                 this.$axios.ajax({
-                    url: "form/models/form-key/uitest",
+                    url: "form/models/form-key/" + this.formAjaxKey,
                     method: "put"
                 }).then(res => {
                     let widgetForm = this.widgetForm;

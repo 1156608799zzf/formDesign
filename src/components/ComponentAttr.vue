@@ -332,6 +332,7 @@
                         };
                         this.textEditor.create();
                     }
+                    this.textEditor.txt.html(selectItem.value);
                 }
             }
         },
