@@ -38,7 +38,7 @@
         </template>
         <!--基础控件显示-->
         <template v-else>
-            <FormItem :label="item.options.label">
+            <FormItem :label="item.options.label" :class="{disableModal: item.options.type !== 'a-sub-list'}">
                 <!--单行文本-->
                 <template v-if="item.options.type === 'text'">
                     <Input
@@ -219,6 +219,20 @@
         z-index: 1;
         .ivu-form-item {
             margin-bottom: 0;
+        }
+        .disableModal {
+            position: relative;
+            &:after {
+                content: "";
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100% !important;
+                min-height: 50px;
+                z-index: 9999;
+                visibility: visible;
+            }
         }
         /*&:after {*/
         /*    content: "";*/

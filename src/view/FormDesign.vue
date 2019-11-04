@@ -381,6 +381,9 @@
     .formDesign {
         height: 100%;
         .panel {
+            &::-webkit-scrollbar {
+                display: none;
+            }
             .panel-title {
                 display: flex;
                 justify-content: space-between;
@@ -413,7 +416,7 @@
                 border-left: 1px solid rgba(220, 222, 226, 1);
                 border-right: 1px solid rgba(220, 222, 226, 1);
                 border-bottom: 1px solid rgba(220, 222, 226, 1);
-                overflow-x: hidden;
+                overflow-x: visible;
                 overflow-y: auto;
             }
         }

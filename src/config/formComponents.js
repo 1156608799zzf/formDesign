@@ -379,9 +379,9 @@ const formComponents = [
         options: {
             type: "l-row-3",
             child: [
-                {key: "0", col: 8, list: []},
-                {key: "1", col: 8, list: []},
-                {key: "2", col: 8, list: []},
+                {col: 8, list: []},
+                {col: 8, list: []},
+                {col: 8, list: []},
             ]
         }
     },
